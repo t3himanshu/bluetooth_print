@@ -42,9 +42,9 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
         channel.setMethodCallHandler(this);
 
         stateChannel = new EventChannel(binding.getBinaryMessenger(), "bluetooth_print_state");
-        stateChannel.setStreamHandler(new StreamHandler() {
+        stateChannel.setStreamHandler(new EventChannel.StreamHandler() {
             @Override
-            public void onListen(Object arguments, EventSink events) {
+            public void onListen(Object arguments, EventChannel.EventSink events) {
                 // Handle streaming events if needed
             }
 
