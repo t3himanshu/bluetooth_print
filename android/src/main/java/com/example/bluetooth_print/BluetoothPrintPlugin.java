@@ -73,13 +73,24 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
   public static void registerWith(Registrar registrar) {
     final BluetoothPrintPlugin instance = new BluetoothPrintPlugin();
 
+    // Get the activity and application context
     Activity activity = registrar.activity();
-    Application application = null;
-    if (registrar.context() != null) {
-      application = (Application) (registrar.context().getApplicationContext());
+    Application application = (Application) registrar.context().getApplicationContext();
+
+    // Ensure that the application and activity are not null
+    if (activity == null) {
+        Log.e("BluetoothPrintPlugin", "Activity is null");
+        return;
     }
+    if (application == null) {
+        Log.e("BluetoothPrintPlugin", "Application context is null");
+        return;
+    }
+
+    // Call the setup method with proper parameters
     instance.setup(registrar.messenger(), application, activity, registrar, null);
-  }
+}
+
 
   public BluetoothPrintPlugin(){
   }
@@ -184,17 +195,21 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
         result.success(threadPool != null);
         break;
       case "startScan":
-      {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-          ActivityCompat.requestPermissions(activityBinding.getActivity(), PERMISSIONS_LOCATION, REQUEST_FINE_LOCATION_PERMISSIONS);
-          pendingCall = call;
-          pendingResult = result;
-          break;
-        }
+{
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED
+        || ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
+        || ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-        startScan(call, result);
+        ActivityCompat.requestPermissions(activityBinding.getActivity(), PERMISSIONS_LOCATION, REQUEST_FINE_LOCATION_PERMISSIONS);
+        pendingCall = call;
+        pendingResult = result;
         break;
-      }
+    }
+
+    startScan(call, result);
+    break;
+}
+
       case "stopScan":
         stopScan();
         result.success(null);
@@ -441,20 +456,35 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
   }
 
   @Override
-  public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-
+  @Override
+public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
     if (requestCode == REQUEST_FINE_LOCATION_PERMISSIONS) {
-      if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-        startScan(pendingCall, pendingResult);
-      } else {
-        pendingResult.error("no_permissions", "this plugin requires location permissions for scanning", null);
-        pendingResult = null;
-      }
-      return true;
-    }
-    return false;
+        boolean allGranted = true;
+        for (int result : grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                allGranted = false;
+                break;
+            }
+        }
 
-  }
+        if (allGranted) {
+            if (pendingCall != null && pendingResult != null && "startScan".equals(pendingCall.method)) {
+                startScan(pendingCall, pendingResult);
+            }
+        } else {
+            if (pendingResult != null) {
+                pendingResult.error("permission_denied", "Required permissions not granted", null);
+            }
+        }
+
+        pendingCall = null;
+        pendingResult = null;
+        return true;
+    }
+
+    return false;
+}
+
 
 
 
