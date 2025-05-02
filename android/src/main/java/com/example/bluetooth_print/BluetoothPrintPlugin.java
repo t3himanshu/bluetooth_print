@@ -6,6 +6,7 @@ import android.app.Application;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -17,8 +18,11 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.EventChannel.StreamHandler;
+import io.flutter.plugin.common.EventChannel.EventSink;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +46,9 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
         channel.setMethodCallHandler(this);
 
         stateChannel = new EventChannel(binding.getBinaryMessenger(), "bluetooth_print_state");
-        stateChannel.setStreamHandler(new EventChannel.StreamHandler() {
+        stateChannel.setStreamHandler(new StreamHandler() {
             @Override
-            public void onListen(Object arguments, EventChannel.EventSink events) {
+            public void onListen(Object arguments, EventSink events) {
                 // Handle streaming events if needed
             }
 
